@@ -6,14 +6,16 @@ int main()
 	int count;
 	size_t n, block_size;
 	cout << "Enter matrix dimentions: " << endl;
-	cin >> n;
-	while (1)
-	{
+	//cin >> n;
+	//while (1)
+	//{
+	n = 1024;
 		cout << "Enter block size: ";
-		cin >> block_size;
+		block_size = 64;
+		//cin >> block_size;
 		count = 0;
-		while (count < 5)
-		{
+		/*while (count < 5)
+		{*/
 
 			QR <double> t(0, n, block_size);
 			auto start_A{ chrono::steady_clock::now() };
@@ -43,6 +45,6 @@ int main()
 			else cout << "QR-decomposition is incorrect";
 
 			cout << endl;
-		}
-	}
+		//}
+	//}
 }

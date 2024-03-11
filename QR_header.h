@@ -4,7 +4,7 @@
 #include <cmath>
 #include <omp.h>
 #include <chrono>
-//#include <C:\Program Files (x86)\Intel\oneAPI\mkl\2023.2.0\include\mkl.h>
+#include <mkl.h>
 
 //const size_t bs = 32;
 using namespace std;
@@ -57,12 +57,12 @@ public:
 			for (i = 0; i < n; i++)
 				copy(R + i * n, R + (i + 1) * n, REF_A + i * n);
 
-			/*auto start{ chrono::steady_clock::now() };
-			LAPACKE_dgeqrf(LAPACK_ROW_MAJOR, n, n, REF_A, n, v);
-			LAPACKE_dorgqr(LAPACK_ROW_MAJOR, n, n, n, REF_A, n, v);
+			auto start{ chrono::steady_clock::now() };
+			LAPACKE_dgeqrf(LAPACK_ROW_MAJOR, n, n, REF_A, n, v_vector);
+			LAPACKE_dorgqr(LAPACK_ROW_MAJOR, n, n, n, REF_A, n, v_vector);
 			auto end{ chrono::steady_clock::now() };
 			chrono::duration<double> elapsed_seconds = end - start;
-			cout << "Time spent (MKL): " << elapsed_seconds.count() << endl;*/
+			cout << "Time spent (MKL): " << elapsed_seconds.count() << endl;
 
 			for (i = 0; i < n; i++)
 				copy(R + i * n, R + (i + 1) * n, REF_A + i * n);
@@ -134,16 +134,16 @@ public:
 
 		for (; m < (n / block_size); m++)
 
-			HHolder_Block(m * block_size, block_size);
+			HHolder_Block(m * block_size);
 
 		if (n % block_size != 0)
 			HHolder_Block_finish(m * block_size, n - m * block_size);
 	}
-	void HHolder_Block(size_t i_start, size_t b_size)
+	void HHolder_Block(size_t i_start)
 	{
 		size_t num_in_block;
 
-		for (j = i_start; j < i_start + b_size; j++)
+		for (j = i_start; j < i_start + block_size; j++)
 		{
 			num_in_block = j - i_start;
 			count_v_gamma(j);
@@ -151,22 +151,22 @@ public:
 			if (n - i_start >= 512)
 			{
 #pragma  omp parallel for private (k) //512/64 slowdown, 1024/64 minor boost (simd in scal - slowdown)
-				for (k = j; k < i_start + b_size; k++)
+				for (k = j; k < i_start + block_size; k++)
 					factor_block[k - j] = scal(j, k) / abs(v_vector[j]);
 			}
 			else
-				for (k = j; k < i_start + b_size; k++)
+				for (k = j; k < i_start + block_size; k++)
 				factor_block[k - j] = scal(j, k) / abs(v_vector[j]);
 
 			if (n - i_start >= 512)
 			{
-#pragma omp parallel for simd private (i,k) //512/64 slowdown, 1024/64 minor boost
+#pragma omp parallel for simd private (i) //512/64 slowdown, 1024/64 minor boost
 				for (i = j; i < n; i++)
-					for (k = j; k < i_start + b_size; k++)
+					for (k = j; k < i_start + block_size; k++)
 						R[i * n + k] -= v_vector[i] * factor_block[k - j];
 			}
 			else for (i = j; i < n; i++)
-				for (k = j; k < i_start + b_size; k++)
+				for (k = j; k < i_start + block_size; k++)
 					R[i * n + k] -= v_vector[i] * factor_block[k - j];
 
 			for (i = j; i < n; i++)
@@ -174,65 +174,11 @@ public:
 	
 		}
 		
-		memset(w, 0, n * block_size * sizeof(T));
+		W_count(i_start);
+		
+		Q_count(i_start);
 
-		norm = 0.0;
-
-		for (i = i_start; i < n; i++)
-			norm += R[(i + 1) * n + i_start] * R[(i + 1) * n + i_start];
-
-		norm = -2 / (norm);
-
-		for (i = i_start; i < n; i++)
-			w[i * block_size] = (norm)*R[(i + 1) * n + i_start];
-
-		for (i = 1; i < b_size; i++)
-		{
-
-			norm = 0.0;
-
-			for (k = i + i_start; k < n; k++)
-				norm += R[(k + 1) * n + (i + i_start)] * R[(k + 1) * n + (i + i_start)];
-
-			norm = -2 / (norm);
-
-#pragma omp parallel for /*simd*/ private(k,j,m) //512/64 MULTIPLE boost WHY IS IT CORRECT AND FAST WITHOUT SIMD
-			for (j = 0; j < n; j++)
-//#pragma omp simd /*reduction(+: w[j * block_size + i])*//* private (k,m)*/ 
-				for (k = i + i_start; k < n; k++)
-					for (m = 0; m < i; m++)
-
-						w[j * block_size + i] += w[j * block_size + m] * R[(k + 1) * n + m + i_start] * R[(k + 1) * n + i + i_start] * (norm);
-
-			for (j = i+i_start; j < n; j++)
-				w[j * block_size + i] += R[(j + 1) * n + i + i_start] * (norm);
-		}
-
-		memset(Q, 0, n * n * sizeof(T));
-
-//#pragma omp parallel for simd private(k,j,m) //512/64 slowdown WHY IS IT CORRECT
-		for (j = i_start; j < n; j++)
-			for (m = i_start; m < i_start + min((j + 1 - i_start), block_size); m++)
-				for (k = i_start; k < n; k++)
-
-					Q[j * n + k] += R[(j + 1) * n + m] * w[k * block_size + (m - i_start)];
-
-		for (j = 0; j < n; j++)
-			Q[j * n + j] += 1;
-
-#pragma omp parallel for private (i) //512/64 no result
-		for(i=0;i<n;i++)
-			copy(R + i * n, R + (i+1)*n, R_tmp + i * n);
-
-		for (i = 0; i < n; i++)
-			memset(R + i * n + i_start + b_size, 0, (n - i_start - b_size) * sizeof(T));
-
-#pragma omp parallel for simd private(k,j,m) //512/64 obvious boost WHY IS IT CORRECT
-		for (k = i_start + b_size; k < n; k++)
-			for (j = 0; j < n; j++)
-				for (m = 0; m < n; m++)
-
-					R[j * n + k] += Q[j * n + m] * R_tmp[m * n + k];
+		R_recount(i_start);
 	}
 
 	void HHolder_Block_finish(size_t i_start, size_t b_size)
@@ -251,6 +197,75 @@ public:
 				for (k = j; k < i_start + b_size; k++)
 					R[i * n + k] -= v_vector[i] * factor_block[k - j];
 		}
+	}
+
+	void R_recount(size_t i_start)
+	{
+#pragma omp parallel for private (i) //512/64 no result
+		for (i = 0; i < n; i++)
+			copy(R + i * n, R + (i + 1) * n, R_tmp + i * n);
+
+		for (i = i_start; i < n; i++)
+			memset(R + i * n + i_start + block_size, 0, (n - i_start - block_size) * sizeof(T));
+
+#pragma omp parallel for simd private(k,j) //512/64 obvious boost WHY IS IT CORRECT
+		for (k = i_start + block_size; k < n; k++)
+			for (j = i_start; j < n; j++)
+				for (m = 0; m < n; m++)
+
+					R[j * n + k] += Q[j * n + m] * R_tmp[m * n + k];
+	}
+
+	void Q_count(size_t i_start)
+	{
+		memset(Q, 0, n * n * sizeof(T));
+
+#pragma omp parallel for simd private(k,j,m) //512/64 slowdown
+		for (j = i_start; j < n; j++)
+			for (k = i_start; k < n; k++)
+				for (m = i_start; m < i_start + min((j + 1 - i_start), block_size); m++)
+
+					Q[j * n + k] += R[(j + 1) * n + m] * w[k * block_size + (m - i_start)];
+
+		for (j = 0; j < n; j++)
+			Q[j * n + j] += 1;
+	}
+
+	void W_count(size_t i_start)
+	{
+		memset(w, 0, n * block_size * sizeof(T));
+
+		norm = 0.0;
+
+		for (i = i_start; i < n; i++)
+			norm += R[(i + 1) * n + i_start] * R[(i + 1) * n + i_start];
+
+		norm = -2 / (norm);
+
+		for (i = i_start; i < n; i++)
+			w[i * block_size] = (norm)*R[(i + 1) * n + i_start];
+
+		for (i = 1; i < block_size; i++)
+		{
+
+			norm = 0.0;
+
+			for (k = i + i_start; k < n; k++)
+				norm += R[(k + 1) * n + (i + i_start)] * R[(k + 1) * n + (i + i_start)];
+
+			norm = -2 / (norm);
+
+#pragma omp parallel for /*simd*/ private(j,k,m) //512/64 MULTIPLE boost WHY IS IT CORRECT AND FAST WITHOUT SIMD
+			for (j = 0; j < n; j++)
+				for (k = i + i_start; k < n; k++)
+					for (m = 0; m < i; m++)
+
+						w[j * block_size + i] += w[j * block_size + m] * R[(k + 1) * n + m + i_start] * R[(k + 1) * n + i + i_start] * (norm);
+
+			for (j = i + i_start; j < n; j++)
+				w[j * block_size + i] += R[(j + 1) * n + i + i_start] * (norm);
+		}
+
 	}
 
 	void HHolder_Q()
