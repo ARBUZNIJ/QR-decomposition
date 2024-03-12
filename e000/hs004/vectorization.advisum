@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- <!DOCTYPE IntelParallelAdvisorSummaryCollection SYSTEM  "IntelParallelAdvisorSummaryCollection.dtd"> -->
+
+<IntelParallelAdvisorSummary version="" 
+                             kind="DATAKIND_SURVEY_EX" >
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_header.h"
+           line_no="261"
+           routine="QR&lt;double&gt;::W_count"
+           is_vectorized="0"
+           self_time="3.357077E+01"
+           total_time="3.357077E+01"
+           trip_counts=""
+           func_instance="34"
+           priority="0"/>
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_header.h"
+           line_no="216"
+           routine="QR&lt;double&gt;::R_recount"
+           is_vectorized="2"
+           self_time="5.158145E+00"
+           total_time="5.158145E+00"
+           trip_counts=""
+           func_instance="58"
+           priority="0"/>
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_header.h"
+           line_no="312"
+           routine="QR&lt;double&gt;::check"
+           is_vectorized="0"
+           self_time="3.868910E+00"
+           total_time="3.868910E+00"
+           trip_counts=""
+           func_instance="171"
+           priority="0"/>
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_header.h"
+           line_no="214"
+           routine="QR&lt;double&gt;::R_recount"
+           is_vectorized="0"
+           self_time="3.292503E+00"
+           total_time="3.292503E+00"
+           trip_counts=""
+           func_instance="63"
+           priority="0"/>
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_header.h"
+           line_no="260"
+           routine="QR&lt;double&gt;::W_count"
+           is_vectorized="0"
+           self_time="3.134562E+00"
+           total_time="3.670534E+01"
+           trip_counts=""
+           func_instance="22"
+           priority="0"/>
+</IntelParallelAdvisorSummary >

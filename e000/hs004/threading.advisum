@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- <!DOCTYPE IntelParallelAdvisorSummaryCollection SYSTEM  "IntelParallelAdvisorSummaryCollection.dtd"> -->
+
+<IntelParallelAdvisorSummary version="" 
+                             kind="DATAKIND_SURVEY_EX" >
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_main.cpp"
+           line_no="23"
+           routine="main"
+           is_vectorized="0"
+           self_time="0.000000E+00"
+           total_time="5.170530E+01"
+           trip_counts=""
+           func_instance="21"
+           priority="0"/>
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_main.cpp"
+           line_no="23"
+           routine="main"
+           is_vectorized="0"
+           self_time="0.000000E+00"
+           total_time="4.024571E+01"
+           trip_counts=""
+           func_instance="237"
+           priority="0"/>
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_header.h"
+           line_no="258"
+           routine="QR&lt;double&gt;::W_count"
+           is_vectorized="0"
+           self_time="0.000000E+00"
+           total_time="3.981522E+01"
+           trip_counts=""
+           func_instance="234"
+           priority="0"/>
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_header.h"
+           line_no="260"
+           routine="QR&lt;double&gt;::W_count"
+           is_vectorized="0"
+           self_time="3.134562E+00"
+           total_time="3.670534E+01"
+           trip_counts=""
+           func_instance="22"
+           priority="0"/>
+  <hotspot filename="C:\Users\kovko\source\repos\QR-decomposition_no_tests\QR_header.h"
+           line_no="261"
+           routine="QR&lt;double&gt;::W_count"
+           is_vectorized="0"
+           self_time="3.357077E+01"
+           total_time="3.357077E+01"
+           trip_counts=""
+           func_instance="34"
+           priority="0"/>
+</IntelParallelAdvisorSummary >
